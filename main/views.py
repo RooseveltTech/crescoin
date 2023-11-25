@@ -15,7 +15,7 @@ class GetUserBeneficiary(APIView):
     permission_classes = [IsAuthenticated, UserIsActive]
 
     serializer_class = AllBeneficiarySerializer
-    @swagger_auto_schema(request_body=AllBeneficiarySerializer)
+    
     def get(self, request):
         """ Get all user beneficiaries."""
         all_beneficiary = Beneficiary.objects.filter(user=request.user, is_deleted=False).order_by("-id")
