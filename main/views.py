@@ -43,7 +43,7 @@ class DeleteUserBeneficiary(APIView):
         serializer.is_valid(raise_exception=True)
         return Response({"message": "beneficiary deleted successfully"}, status=status.HTTP_200_OK)
 
-class CreatePayrollPinAPIView(APIView):
+class CreateTransactionPinAPIView(APIView):
     permission_classes = [IsAuthenticated, UserIsActive, CheckPin]
     serializer_class = CreateTransactionPinSerializer
     @swagger_auto_schema(request_body=CreateTransactionPinSerializer)
@@ -57,7 +57,7 @@ class CreatePayrollPinAPIView(APIView):
         }
         return Response(response, status=status.HTTP_201_CREATED)
 
-class PayrollPinUpdateAPIView(APIView):
+class UpdateTransactionPinAPIView(APIView):
     permission_classes = [IsAuthenticated, UserIsActive, UserHasPin]
     serializer_class = ChangeTransactionPinSerializer
     @swagger_auto_schema(request_body=ChangeTransactionPinSerializer)
