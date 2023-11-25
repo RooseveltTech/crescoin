@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext as _
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 import uuid
 import json, os
 
@@ -106,6 +106,26 @@ class User(AbstractUser, BaseModel):
         except cls.DoesNotExist:
             return None
         return user
+    
+    @staticmethod
+    def create_transaction_pin(user, transaction_pin) -> bool:
+        """
+        Collect pin and hash it
+        """
+        if not user.transaction_pin:
+            hashed_pin = make_password(transaction_pin)
+            user.transaction_pin = hashed_pin
+            user.save()
+            return True
+        else:
+            return False
+        
+    @staticmethod
+    def check_transaction_pin(user, transaction_pin) -> bool:
+        """
+        Check if entered pin is correct
+        """
+        return check_password(transaction_pin, user.transaction_pin)
     
     def username_exist(cls, username):
         try:
