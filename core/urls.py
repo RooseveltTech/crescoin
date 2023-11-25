@@ -6,4 +6,5 @@ urlpatterns = [
     path('register/', views.RegistrationAPIView.as_view(), name=''),
     path('login/', LoginView.as_view(), name=''),
     path('email/', views.CheckEmailAPIView.as_view(), name=''),
+    path('verification/', views.Verification.as_view(), name=''),
 ]

@@ -6,6 +6,13 @@ import uuid
 import json, os
 
 # Create your model(s) here.
+
+VERIFICATION_TYPE = [
+        ("PASSPORT", "PASSPORT"),
+        ("DRIVING_LICENSE", "DRIVING_LICENSE"),
+        ("NULL", "NULL")
+    ]
+
 class BaseModel(models.Model):
     """Base model for reuse.
     Args:
@@ -66,6 +73,14 @@ class User(AbstractUser, BaseModel):
     user_is_active = models.BooleanField(default=False)
     user_is_suspended = models.BooleanField(default=False)
     user_is_deleted = models.BooleanField(default=False)
+    transaction_pin = models.CharField(max_length=255, null=True, blank=True, editable=False)
+    passport_number = models.CharField(max_length=255, blank=False, null=True)
+    passport_expiry_date = models.DateField(blank=False, null=True)
+    passport_issue_date = models.DateField(blank=False, null=True)
+    driving_license_number = models.CharField(max_length=255, blank=False, null=True)
+    driving_license_expiry_date = models.DateField(blank=False, null=True)
+    driving_license_issue_date = models.DateField(blank=False, null=True)
+    verification_type = models.CharField(max_length=200, choices=VERIFICATION_TYPE, default="NULL")
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []

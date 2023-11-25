@@ -2,17 +2,21 @@ from rest_framework import status
 from rest_framework.decorators import APIView
 from rest_framework.response import Response
 from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.permissions import IsAuthenticated
 
 from django.shortcuts import render
 from django.template import loader
 from django.contrib.auth import get_user_model
+from core.authentication import CustomTokenAuthentication
 from core.func import send_email
 
-from core.serializers import RegistrationSerializer
+from core.serializers import RegistrationSerializer, VerificationSerializer
 
 from drf_yasg.utils import swagger_auto_schema
 # Create your views here.
 import requests
+
+from main.permissions import AllowUser, UserAlreadyVerified
 
 User = get_user_model()
 
@@ -58,3 +62,15 @@ class CheckEmailAPIView(APIView):
                 },
                 status=status.HTTP_200_OK
             )
+        
+class Verification(APIView):
+    permission_classes = [IsAuthenticated, AllowUser, UserAlreadyVerified]
+
+    serializer_class = VerificationSerializer
+    @swagger_auto_schema(request_body=VerificationSerializer)
+    def post(self, request):
+        request_user = request.user
+        serializer = self.serializer_class(data=request.data, context={"request_user": request_user})
+        serializer.is_valid(raise_exception=True)
+        return Response({"message":"verification successful"},status=status.HTTP_200_OK)
+        

@@ -1,10 +1,13 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from django.contrib.auth.hashers import make_password
+from django.utils import timezone
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status, exceptions
 from rest_framework.exceptions import ValidationError
+
+from core.models import VERIFICATION_TYPE
 
 
 User = get_user_model()
@@ -107,3 +110,73 @@ class CustomTokenObtainSerializer(TokenObtainPairSerializer):
         
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainSerializer
+
+class VerificationSerializer(serializers.Serializer):
+    
+    verification_type = serializers.ChoiceField(required=True, choices=VERIFICATION_TYPE)
+    driving_license = serializers.CharField(max_length=255, required=False, allow_null=True, allow_blank=True)
+    passport_number = serializers.CharField(max_length=255, required=False, allow_null=True, allow_blank=True)
+    passport_expiry_date = serializers.DateField(required=False, allow_null=True)
+    passport_issue_date = serializers.DateField(required=False, allow_null=True)
+    driving_license_number = serializers.CharField(max_length=255, required=False, allow_null=True, allow_blank=True)
+    driving_license_expiry_date = serializers.DateField(required=False, allow_null=True)
+    driving_license_issue_date = serializers.DateField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        today_date = timezone.now().date()
+        least_expiry_date = today_date + timezone.timedelta(days=7)
+        request_user = self.context.get('request_user')
+        if attrs.get('verification_type') == "PASSPORT":
+            if attrs.get('passport_number') is None:
+                raise ValidationError({"passport_number": "This field is required"})
+            if len(attrs.get('passport_number')) < 5:
+                raise ValidationError({"passport_number": "passport_number must be at least 5 characters"})
+            if attrs.get('passport_issue_date') is None:
+                raise ValidationError({"passport_issue_date": "This field is required"})
+            if attrs.get('passport_issue_date') > today_date:
+                raise ValidationError({"passport_issue_date": "passport_issue_date cannot be in the future"})
+            if attrs.get('passport_expiry_date') is None:
+                raise ValidationError({"passport_expiry_date": "This field is required"})
+            if attrs.get('passport_expiry_date') == attrs.get('passport_issue_date'):
+                raise ValidationError({"passport_expiry_date": "passport_expiry_date cannot be the same as passport_issue_date"})
+            if attrs.get('passport_expiry_date') < attrs.get('passport_issue_date'):
+                raise ValidationError({"passport_expiry_date": "passport_expiry_date cannot be less than passport_issue_date"})
+            if attrs.get('passport_expiry_date') < least_expiry_date:
+                raise ValidationError({"passport_expiry_date": f"passport_expiry_date must be at least {least_expiry_date}"})
+ 
+            request_user.passport_number = attrs.get('passport_number')
+            request_user.passport_expiry_date = attrs.get('passport_expiry_date')
+            request_user.passport_issue_date = attrs.get('passport_issue_date')
+            request_user.verification_type = attrs.get('verification_type')
+            request_user.user_is_active = True
+            request_user.save()
+
+        elif attrs.get('verification_type') == "DRIVING_LICENSE":
+            if attrs.get('driving_license_number') is None:
+                raise ValidationError({"message": "driving license number is required"})
+            if len(attrs.get('driving_license_number')) < 5:
+                raise ValidationError({"driving_license_number": "driving_license_number must be at least 5 characters"})
+            if attrs.get('driving_license_issue_date') is None:
+                raise ValidationError({"driving_license_issue_date": "This field is required"})
+            if attrs.get('driving_license_issue_date') > today_date:
+                raise ValidationError({"driving_license_issue_date": "driving_license_issue_date cannot be in the future"})
+            if attrs.get('driving_license_expiry_date') is None:
+                raise ValidationError({"driving_license_expiry_date": "This field is required"})
+            if attrs.get('driving_license_expiry_date') == attrs.get('driving_license_issue_date'):
+                raise ValidationError({"driving_license_expiry_date": "driving_license_expiry_date cannot be the same as driving_license_issue_date"})
+            if attrs.get('driving_license_expiry_date') < attrs.get('driving_license_issue_date'):
+                raise ValidationError({"driving_license_expiry_date": "driving_license_expiry_date cannot be less than driving_license_issue_date"})
+            if attrs.get('driving_license_expiry_date') < least_expiry_date:
+                raise ValidationError({"driving_license_expiry_date": f"driving_license_expiry_date must be at least {least_expiry_date}"})
+            
+            request_user.driving_license_number = attrs.get('driving_license_number')
+            request_user.driving_license_expiry_date = attrs.get('driving_license_expiry_date')
+            request_user.driving_license_issue_date = attrs.get('driving_license_issue_date')
+            request_user.verification_type = attrs.get('verification_type')
+            request_user.user_is_active = True
+            request_user.save()
+        
+        else:
+            raise ValidationError({"message": "verification_type is invalid"})
+
+        return attrs
