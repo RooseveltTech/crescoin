@@ -14,11 +14,12 @@ from drf_yasg.utils import swagger_auto_schema
 class GetUserBeneficiary(APIView):
     permission_classes = [IsAuthenticated, UserIsActive]
 
+    serializer_class = AllBeneficiarySerializer
     @swagger_auto_schema(request_body=AllBeneficiarySerializer)
     def get(self, request):
         """ Get all user beneficiaries."""
         all_beneficiary = Beneficiary.objects.filter(user=request.user, is_deleted=False).order_by("-id")
-        beneficiary_list = AllBeneficiarySerializer(all_beneficiary, many=True)
+        beneficiary_list = self.serializer_class(all_beneficiary, many=True)
         response = {
             "beneficiaries": beneficiary_list.data
         }
@@ -26,10 +27,10 @@ class GetUserBeneficiary(APIView):
     
 class CreateUserBeneficiary(APIView):
     permission_classes = [IsAuthenticated, UserIsActive, UserHasPin]
-
+    serializer_class = CreateBeneficiarySerializer
     @swagger_auto_schema(request_body=CreateBeneficiarySerializer)
     def post(self, request):
-        serializer = CreateBeneficiarySerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         all_beneficiary = serializer.validated_data.get("beneficiary_data")
         beneficiary = Beneficiary.create_single_multiple_beneficiary(request.user, all_beneficiary)
@@ -37,9 +38,9 @@ class CreateUserBeneficiary(APIView):
 
 class DeleteUserBeneficiary(APIView):
     permission_classes = [IsAuthenticated, UserIsActive, UserHasPin]  
-
+    serializer_class = DeleteBeneficiarySerializer
     @swagger_auto_schema(request_body=DeleteBeneficiarySerializer)
     def delete(self, request):
-        serializer = DeleteBeneficiarySerializer(data=request.data, context={"request_user": request.user})
+        serializer = self.serializer_class(data=request.data, context={"request_user": request.user})
         serializer.is_valid(raise_exception=True)
         return Response({"message": "beneficiary deleted successfully"}, status=status.HTTP_200_OK)
