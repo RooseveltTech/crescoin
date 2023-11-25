@@ -1,13 +1,13 @@
 from rest_framework import status
 from rest_framework.decorators import APIView
 from rest_framework.response import Response
-from rest_framework.renderers import TemplateHTMLRenderer
+
 from rest_framework.permissions import IsAuthenticated
 
 from django.shortcuts import render
-from django.template import loader
+
 from django.contrib.auth import get_user_model
-from core.authentication import CustomTokenAuthentication
+
 from core.func import send_email
 
 from core.serializers import RegistrationSerializer, VerificationSerializer

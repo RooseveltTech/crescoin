@@ -18,22 +18,26 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'first_name', 'last_name', 'phone_number', 'country', 'password', 'confirm_password')
+        fields = ('email', 'first_name', 'last_name', 'phone_number', 'user_tag', 'country', 'password', 'confirm_password')
         extra_kwargs = {
             'first_name': {'required': True, 'allow_null': False, 'allow_blank': False},
             'last_name': {'required': True, 'allow_null': False, 'allow_blank': False},
             'phone_number': {'required': True, 'allow_null': True, 'allow_blank': True},
             'country': {'required': True, 'allow_null': False, 'allow_blank': False},
+            'user_tag': {'required': True, 'allow_null': False, 'allow_blank': False},
         }
 
     def validate(self, attrs):
 
         email = attrs.get('email')
         phone_number = attrs.get('phone_number')
+        user_tag = attrs.get('user_tag')
         if User.objects.filter(email=email).exists():
             raise serializers.ValidationError({"message": "email already exists"})
         if User.objects.filter(phone_number=phone_number).exists():
-            raise serializers.ValidationError({"message": "phone number already exists"})
+            raise serializers.ValidationError({"message": "phone_number already exists"})
+        if User.objects.filter(user_tag=user_tag).exists():
+            raise serializers.ValidationError({"message": "user_tag already exists"})
         if attrs.get("confirm_password") != attrs.get("password"):
             raise serializers.ValidationError({"message": "password and confirm_password does not match"})
         

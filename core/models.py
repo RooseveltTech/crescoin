@@ -80,6 +80,7 @@ class User(AbstractUser, BaseModel):
     driving_license_number = models.CharField(max_length=255, blank=False, null=True)
     driving_license_expiry_date = models.DateField(blank=False, null=True)
     driving_license_issue_date = models.DateField(blank=False, null=True)
+    user_tag = models.CharField(max_length=255, blank=False, null=True, unique=True)
     verification_type = models.CharField(max_length=200, choices=VERIFICATION_TYPE, default="NULL")
 
     USERNAME_FIELD = 'email'
