@@ -5,7 +5,7 @@ from rest_framework import permissions
 class NoPermission(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = {
-        "error": "error",
+        "error": True,
         "params": "you are not permitted to perform this action",
     }
     default_code = "Not permitted"
@@ -13,7 +13,7 @@ class NoPermission(APIException):
 class AccountSuspended(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = {
-        "error": "error",
+        "error": True,
         "message": "account suspended please contact admin",
     }
     default_code = "Not permitted"
@@ -21,40 +21,40 @@ class AccountSuspended(APIException):
 class IncorrectPin(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = {
-        "error": "error",
-        "params": "incorrect pin",
+        "error": True,
+        "message": "incorrect pin",
     }
     default_code = "Not permitted"
 
 class NoPin(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = {
-        "error": "error",
-        "params": "create user pin first",
+        "error": True,
+        "message": "create user pin first",
     }
     default_code = "Not permitted"
 
 class HasPin(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = {
-        "error": "error",
-        "params": "user already have pin",
+        "error": True,
+        "message": "user already have pin",
     }
     default_code = "Not permitted"
 
 class UserNotVerified(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = {
-        "error": "error",
-        "params": "user not verified",
+        "error": True,
+        "message": "user not verified",
     }
     default_code = "Not permitted"
 
 class UserVerified(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = {
-        "error": "error",
-        "params": "user already verified",
+        "error": True,
+        "message": "user already verified",
     }
     default_code = "Not permitted"
 
