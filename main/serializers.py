@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from main.models import Beneficiary
+from main.models import Beneficiary, CurrencyExchangeTable, DebitCreditRecordOnAccount, Transaction
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
@@ -138,7 +138,209 @@ class ChangeTransactionPinSerializer(serializers.Serializer):
             )
         return attrs
     
-     
+class GetExchangeRateSerializer(serializers.Serializer):
+    amount = serializers.FloatField(required=True, min_value=1)
+    currency_from = serializers.CharField(required=True)
+    currency_to = serializers.CharField(required=True)
+    def validate(self, attrs):
+        currency_from = attrs.get("currency_from")
+        currency_to = attrs.get("currency_to")
+        amount = attrs.get("amount")
+        if len(currency_from) != 3:
+            raise serializers.ValidationError(
+                {
+                    "currency_from": "currency_from must be three letter code"
+                }
+            )
+        get_currency_from = CurrencyExchangeTable.objects.filter(short_code=currency_from, currency_rate__gt=0).last()
+        if not get_currency_from:
+            raise serializers.ValidationError(
+                {
+                    "currency_from": f"{currency_from} does not exist"
+                }
+            )
+        if len(currency_to) != 3:
+            raise serializers.ValidationError(
+                {
+                    "currency_to": "currency_to must be three letter code"
+                }
+            )
+        get_currency_to = CurrencyExchangeTable.objects.filter(short_code=currency_to, currency_rate__gt=0).last()
+        if not get_currency_to:
+            raise serializers.ValidationError(
+                {
+                    "currency_to": f"{currency_to} does not exist"
+                }
+            )
+        if currency_from == currency_to:
+            raise serializers.ValidationError(
+                {
+                    "currency_from": f"{currency_from} and {currency_to} cannot be be the same"
+                }
+            )
         
+        base_amount = 1 / get_currency_from.currency_rate
+        exchange_rate = round(base_amount * get_currency_to.currency_rate, 2) + (0.1 * round(base_amount * get_currency_to.currency_rate, 2))
+        attrs["exchange_rate_from"] = 1
+        attrs["exchange_rate_to"] = exchange_rate * amount
+        return attrs
+    
+class GetExchangeForFundingAccountSerializer(serializers.Serializer):
+    def validate(self, attrs):
+        currency_from = self.context.get("currency_from")
+        if not currency_from:
+            raise serializers.ValidationError(
+                {
+                    "params": "currency_from is required"
+                }
+            )
+        if len(currency_from) != 3:
+            raise serializers.ValidationError(
+                {
+                    "currency_from": "currency_from must be three letter code"
+                }
+            )
+        get_currency_from = CurrencyExchangeTable.objects.filter(short_code=currency_from, currency_rate__gt=0).last()
+        if not get_currency_from:
+            raise serializers.ValidationError(
+                {
+                    "currency_from": f"{currency_from} does not exist"
+                }
+            )
         
+        get_currency_to = CurrencyExchangeTable.objects.filter(short_code="USD").last()
+        base_amount = 1 / get_currency_from.currency_rate
+        exchange_rate = round(base_amount * get_currency_to.currency_rate, 2) - (0.1 * round(base_amount * get_currency_to.currency_rate, 2))
+        attrs["message"] = f"you account will be funded with {exchange_rate} CRC"
+        attrs["exchange_rate"] = exchange_rate
+        return attrs
+
+
+class FundAccountSerializer(serializers.Serializer):
+    amount = serializers.FloatField(required=True, min_value=1)
+    currency_from = serializers.CharField(required=True)
+    transaction_pin = serializers.CharField(required=True)
+    def validate(self, attrs):
+        transaction_pin = attrs.get("transaction_pin")
+        request_user = self.context.get('request_user')
+        amount = attrs.get("amount")
+        currency_from = attrs.get("currency_from")
+
+        check_transaction_pin = User.check_transaction_pin(user=request_user, transaction_pin=transaction_pin)
+        if not check_transaction_pin:
+            raise serializers.ValidationError(
+                {
+                    "error_code": "14",
+                    "transaction_pin": "transaction_pin is incorrect!"
+                }
+            )
+        if len(currency_from) != 3:
+            raise serializers.ValidationError(
+                {
+                    "currency_from": "currency_from must be three letter code"
+                }
+            )
+        get_currency_from = CurrencyExchangeTable.objects.filter(short_code=currency_from, currency_rate__gt=0).last()
+        if not get_currency_from:
+            raise serializers.ValidationError(
+                {
+                    "currency_from": f"{currency_from} does not exist"
+                }
+            )
+        get_currency_to = CurrencyExchangeTable.objects.filter(short_code="USD").last()
+        base_amount = 1 / get_currency_from.currency_rate
+        exchange_rate = round(base_amount * get_currency_to.currency_rate, 2) - (0.2 * round(base_amount * get_currency_to.currency_rate, 2))
+        amount_to = exchange_rate * amount
+        if amount_to < 1:
+            raise serializers.ValidationError(
+                {
+                    "message": "you must fund your account with at least 1 CRC"
+                }
+            )
+        
+        User.fund_account(user=request_user, amount=amount_to)
+        attrs["amount_from"] = amount
+        attrs["currency_from"] = get_currency_from.short_code
+        attrs["exchange_rate"] = exchange_rate
+        attrs["amount_to"] = amount_to
+        attrs["currency_to"] = "CRC"
+        attrs["message"] = f"you account has been funded with {amount_to} CRC"
+        return attrs
+    
+class SendMoneySerializer(serializers.Serializer):
+    amount = serializers.FloatField(required=True, min_value=1)
+    receiver_tag = serializers.CharField(required=True)
+    transaction_pin = serializers.CharField(required=True)
+    narration = serializers.CharField(required=True)
+    def validate(self, attrs):
+        transaction_pin = attrs.get("transaction_pin")
+        request_user = self.context.get('request_user')
+        amount = attrs.get("amount")
+        receiver_tag = attrs.get("receiver_tag")
+        narration = attrs.get("narration")
+
+        check_transaction_pin = User.check_transaction_pin(user=request_user, transaction_pin=transaction_pin)
+        if not check_transaction_pin:
+            raise serializers.ValidationError(
+                {
+                    "error_code": "14",
+                    "transaction_pin": "transaction_pin is incorrect!"
+                }
+            )
+    
+        get_receiver = User.objects.filter(user_tag=receiver_tag).last()
+        if not get_receiver:
+            raise serializers.ValidationError(
+                {
+                    "currency_from": f"{get_receiver} does not exist"
+                }
+            )
+        transaction = Transaction.objects.create(user=request_user,
+                                                user_email=request_user.email,
+                                                amount=amount,
+                                                total_amount_sent_out=amount,
+                                                beneficiary_tag=receiver_tag,
+                                                beneficiary_name=receiver_tag.full_name,
+                                                narration=narration,
+                                                source_name=request_user.full_name,
+                                                source_tag=request_user.user_tag,
+                                                transaction_type="BUDDY",
+                                                status="FAILED",
+                                                )
+        # Charge wallet
+        debit_wallet = User.deduct_balance(
+            user=request_user, amount=amount)
+
+        if debit_wallet.get("succeeded") is True:
+            reference = Transaction.create_unique_transaction_ref(
+                        suffix="BUDDY")
+            fund_buddy_reference = Transaction.create_unique_transaction_ref(
+                        suffix="BUDDY")
+            wallet_instance = debit_wallet.get("wallet")
+            balance_after = debit_wallet.get("amount_after")
+            balance_before = debit_wallet.get("amount_before")
+            transaction.balance_before = balance_before
+            transaction.internal_to_internal_ref = reference
+            transaction.balance_after = balance_after
+            transaction.fund_internal_buddy_ref = fund_buddy_reference
+            transaction.status = "SUCCESSFUL"
+            transaction.save()
+
+            debit_record = DebitCreditRecordOnAccount.objects.create(
+                        user=request_user,
+                        entry="DEBIT",
+                        wallet=wallet_instance,
+                        balance_before=balance_before,
+                        amount=amount,
+                        balance_after=balance_after,
+                        transaction_instance_id=transaction.id
+                    )
+            User.fund_account(user=get_receiver, amount=amount)
+        else:
+            raise serializers.ValidationError(
+                {
+                    "message": "insufficient funds!"
+                }
+            )
+        return attrs
   

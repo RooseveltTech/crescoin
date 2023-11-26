@@ -13,5 +13,39 @@ class BeneficiaryResourceAdmin(ImportExportModelAdmin):
     def get_list_display(self, request):
         return [field.name for field in self.model._meta.concrete_fields]
     
+class CurrencyExchangeTableResourceAdmin(ImportExportModelAdmin):
+    resource_class = CurrencyExchangeTableResource
+    search_fields = ["currency_name", "short_code"]  
+    date_hierarchy = 'created_at'
+    def get_list_display(self, request):
+        return [field.name for field in self.model._meta.concrete_fields]
+    
+class TransactionResourceAdmin(ImportExportModelAdmin):
+    resource_class = TransactionResource
+    search_fields = ["user__email", 
+                     "beneficiary_tag", 
+                     "source_tag", 
+                     "transaction_ref", 
+                     "fund_internal_buddy_ref",
+                     "external_to_internal_ref",
+                     "internal_to_internal_ref",
+                     ""
+                     ]  
+    date_hierarchy = 'date_created'
+    list_filter = ["transaction_type", "status"]
+    def get_list_display(self, request):
+        return [field.name for field in self.model._meta.concrete_fields]
+    
+class DebitCreditRecordOnAccountResourceAdmin(ImportExportModelAdmin):
+    resource_class = DebitCreditRecordOnAccountResource
+    search_fields = ["user__email"]  
+    date_hierarchy = 'date_created'
+    list_filter = ["entry"]
+    def get_list_display(self, request):
+        return [field.name for field in self.model._meta.concrete_fields]
+    
 
 admin.site.register(Beneficiary, BeneficiaryResourceAdmin)
+admin.site.register(CurrencyExchangeTable, CurrencyExchangeTableResourceAdmin)
+admin.site.register(Transaction, TransactionResourceAdmin)
+admin.site.register(DebitCreditRecordOnAccount, DebitCreditRecordOnAccountResourceAdmin)
