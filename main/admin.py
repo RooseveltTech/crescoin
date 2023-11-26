@@ -44,8 +44,16 @@ class DebitCreditRecordOnAccountResourceAdmin(ImportExportModelAdmin):
     def get_list_display(self, request):
         return [field.name for field in self.model._meta.concrete_fields]
     
+class MarketPlaceResourceAdmin(ImportExportModelAdmin):
+    resource_class = MarketPlaceResource  
+    date_hierarchy = 'created_at'
+    list_filter = ["is_deleted"]
+    def get_list_display(self, request):
+        return [field.name for field in self.model._meta.concrete_fields]
+    
 
 admin.site.register(Beneficiary, BeneficiaryResourceAdmin)
 admin.site.register(CurrencyExchangeTable, CurrencyExchangeTableResourceAdmin)
 admin.site.register(Transaction, TransactionResourceAdmin)
 admin.site.register(DebitCreditRecordOnAccount, DebitCreditRecordOnAccountResourceAdmin)
+admin.site.register(MarketPlace, MarketPlaceResourceAdmin)

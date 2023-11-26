@@ -1,6 +1,6 @@
 from import_export import resources
 
-from main.models import Beneficiary, CurrencyExchangeTable, DebitCreditRecordOnAccount, Transaction
+from main.models import Beneficiary, CurrencyExchangeTable, DebitCreditRecordOnAccount, MarketPlace, Transaction
 
 class BeneficiaryResource(resources.ModelResource):
     class Meta:
@@ -17,3 +17,7 @@ class TransactionResource(resources.ModelResource):
 class DebitCreditRecordOnAccountResource(resources.ModelResource):
     class Meta:
         model = DebitCreditRecordOnAccount
+
+class MarketPlaceResource(resources.ModelResource):
+    class Meta:
+        model = MarketPlace

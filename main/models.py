@@ -110,7 +110,10 @@ class Transaction(models.Model):
     source_name = models.CharField(
         max_length=250, null=True, blank=True)
     total_amount_resolved = models.FloatField(null=True, blank=True)
-
+    withdrawal_type = models.CharField(
+        max_length=250, null=True, blank=True)
+    withdrawal_operator = models.CharField(
+        max_length=250, null=True, blank=True)
     narration = models.CharField(max_length=1000, null=True, blank=True)
     date_credited = models.DateTimeField(null=True, blank=True)
     class Meta:
@@ -157,3 +160,16 @@ class DebitCreditRecordOnAccount(models.Model):
     class Meta:
         verbose_name = "DEBIT CREDIT RECORD"
         verbose_name_plural = "DEBIT CREDIT RECORDS"
+
+class MarketPlace(models.Model):
+    user = models.ForeignKey("core.User", on_delete=models.CASCADE, related_name="market_place_user"),
+    amount = models.FloatField(validators=[MinValueValidator(0.0)]),
+    currency_from = models.CharField(max_length=255, blank=False, null=True)
+    currency_to = models.CharField(max_length=255, blank=False, null=True)
+    phone_number = models.CharField(max_length=255, blank=False, null=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        verbose_name = "P2P MARKET PLACE"
+        verbose_name_plural = "P2P MARKET PLACES"
