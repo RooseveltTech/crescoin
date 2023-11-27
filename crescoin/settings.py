@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import logging
+import dj-database-url
+
 import os
 
 from pathlib import Path
@@ -93,15 +95,7 @@ WSGI_APPLICATION = 'crescoin.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": config("DATABASE_NAME"),
-        "USER": config("DATABASE_USER"),
-        "PASSWORD": config("DATABASE_PASSWORD"),
-        "HOST": config("DATABASE_HOST"),
-        "PORT": config("DATABASE_PORT"),
-        "OPTIONS": {"sslmode": "require"},
-    }
+	"default": dj_database_url.parse(config("DATABASE_URL"))
 }
 
 
