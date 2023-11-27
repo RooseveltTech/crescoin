@@ -34,7 +34,7 @@ schema_view = get_schema_view(
         contact=openapi.Contact(email="rooseveltabandy@gmail.com"),
         license=openapi.License(name="MIT License"),
     ),
-    url="https://backend-crescoin.azurewebsites.net/",
+    url="https://crescoin.onrender.com/",
     public=True,
     permission_classes=[AllowAny, ],
 )
