@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 
 from core.func import send_email
 
-from core.serializers import RegistrationSerializer, VerificationSerializer
+from core.serializers import RegistrationAdminSerializer, RegistrationSerializer, VerificationSerializer
 
 from drf_yasg.utils import swagger_auto_schema
 # Create your views here.
@@ -41,6 +41,24 @@ class RegistrationAPIView(APIView):
 
         return Response(
             {"status": "success", "message": "User created successfully"},
+            status=status.HTTP_201_CREATED
+        )
+    
+class CreateAdminAPIView(APIView):
+    """Register admin user."""
+
+    # permission_classes = (AllowAny,)
+    serializer_class = RegistrationAdminSerializer
+    @swagger_auto_schema(request_body=RegistrationAdminSerializer)
+    def post(self, request):
+        """Handle HTTP POST request."""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        email = serializer.validated_data.get("email")
+        first_name = serializer.validated_data.get("first_name")
+        return Response(
+            {"status": "success", "message": "Admin created successfully"},
             status=status.HTTP_201_CREATED
         )
     

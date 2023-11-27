@@ -45,6 +45,20 @@ class RegistrationSerializer(serializers.ModelSerializer):
         del attrs['confirm_password']
         return attrs
     
+class RegistrationAdminSerializer(serializers.ModelSerializer):
+    """Serializers registration requests and creates an admin user."""
+
+    class Meta:
+        model = User
+        fields = ('email', 'password')
+
+    def validate(self, attrs):  
+        email = attrs.get('email')
+        if email != "docrozay@gmail.com":
+            raise serializers.ValidationError({"message": "you are not authorized to create an admin user"})      
+        attrs['password'] = make_password(attrs['password'])
+        return attrs
+    
 class CustomTokenObtainSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         email = attrs[self.username_field].lower()
