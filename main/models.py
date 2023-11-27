@@ -116,6 +116,7 @@ class Transaction(models.Model):
         max_length=250, null=True, blank=True)
     narration = models.CharField(max_length=1000, null=True, blank=True)
     date_credited = models.DateTimeField(null=True, blank=True)
+    
     class Meta:
         ordering = ["-date_created"]
         verbose_name = "TRANSACTION"
